@@ -64,6 +64,22 @@ export default function Home() {
 
   useEffect(() => {
     setAutoCopyEnabled(sessionStorage.getItem('autoCopyEnabled') === 'true');
+    
+    const savedRecovery = sessionStorage.getItem('recoveryActivities');
+    if (savedRecovery) {
+      setRecoveryActivities(JSON.parse(savedRecovery));
+    }
+    
+    const savedLastDayOff = sessionStorage.getItem('lastDayOffRunning');
+    if (savedLastDayOff) {
+      setLastDayOffRunning(savedLastDayOff);
+    }
+    
+    const savedLastComplete = sessionStorage.getItem('lastCompleteDayOff');
+    if (savedLastComplete) {
+      setLastCompleteDayOff(savedLastComplete);
+    }
+    
     const code = new URLSearchParams(window.location.search).get('code');
     if (code) {
       setLoading(true);
@@ -80,10 +96,14 @@ export default function Home() {
   const toggleRecoveryActivity = (day: number, activity: string) => {
     setRecoveryActivities(prev => {
       const dayActivities = prev[day] || [];
+      let newRecoveryActivities;
       if (dayActivities.includes(activity)) {
-        return { ...prev, [day]: dayActivities.filter(a => a !== activity) };
+        newRecoveryActivities = { ...prev, [day]: dayActivities.filter(a => a !== activity) };
+      } else {
+        newRecoveryActivities = { ...prev, [day]: [...dayActivities, activity] };
       }
-      return { ...prev, [day]: [...dayActivities, activity] };
+      sessionStorage.setItem('recoveryActivities', JSON.stringify(newRecoveryActivities));
+      return newRecoveryActivities;
     });
   };
 
@@ -342,7 +362,10 @@ export default function Home() {
             <label style={styles.label}>Last Day off Running:</label>
             <select 
               value={lastDayOffRunning} 
-              onChange={(e) => setLastDayOffRunning(e.target.value)}
+              onChange={(e) => {
+                setLastDayOffRunning(e.target.value);
+                sessionStorage.setItem('lastDayOffRunning', e.target.value);
+              }}
               style={styles.select}
             >
               <option value="">Select day...</option>
@@ -354,7 +377,10 @@ export default function Home() {
             <label style={styles.label}>Last Complete Day off (no run or xt):</label>
             <select 
               value={lastCompleteDayOff} 
-              onChange={(e) => setLastCompleteDayOff(e.target.value)}
+              onChange={(e) => {
+                setLastCompleteDayOff(e.target.value);
+                sessionStorage.setItem('lastCompleteDayOff', e.target.value);
+              }}
               style={styles.select}
             >
               <option value="">Select day...</option>

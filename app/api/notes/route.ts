@@ -80,11 +80,18 @@ Write notes now in JSON format:`;
     );
 
     if (!response.ok) {
-      throw new Error(`Gemini API error: ${response.status}`);
+      const errorText = await response.text();
+      console.error("Gemini API error:", response.status, errorText);
+      return NextResponse.json({ notes: {} });
     }
 
     const data = await response.json();
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    
+    if (!content || content === "{}") {
+      console.error("Empty response from Gemini API");
+      return NextResponse.json({ notes: {} });
+    }
 
     let notes: Record<string, string> = {};
     try {
@@ -99,6 +106,6 @@ Write notes now in JSON format:`;
     return NextResponse.json({ notes });
   } catch (error) {
     console.error("Notes generation error:", error);
-    return NextResponse.json({ error: "Failed to generate notes" }, { status: 500 });
+    return NextResponse.json({ notes: {} });
   }
 }
