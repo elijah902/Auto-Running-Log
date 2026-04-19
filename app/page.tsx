@@ -135,8 +135,7 @@ export default function Home() {
       body: JSON.stringify({ days, weekMileage, weekXT })
     });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
-    return data.notes;
+    return response.json();
   };
 
   const formatTimeWithoutLeadingZero = (seconds: number) => {
@@ -288,7 +287,12 @@ export default function Home() {
       let notes: Record<string, string> = {};
       if (generateNotes) {
         try {
-          notes = await generateNotesApi(weekData.days, weekData.totals.mileage, weekData.totals.crossTrainingMinutes);
+          const result = await generateNotesApi(weekData.days, weekData.totals.mileage, weekData.totals.crossTrainingMinutes);
+          if (result.error) {
+            alert('AI Notes Error: ' + result.error);
+          } else {
+            notes = result.notes || {};
+          }
         } catch (e) {
           console.error('Notes generation failed:', e);
         }
