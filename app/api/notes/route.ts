@@ -22,6 +22,8 @@ export async function POST(request: NextRequest) {
   try {
     const body: GenerateNotesRequest = await request.json();
     const apiKey = process.env.GEMINI_API_KEY;
+    console.log("GEMINI_API_KEY present:", !!apiKey);
+    console.log("Key starts with:", apiKey?.substring(0, 10));
 
     if (!apiKey) {
       return NextResponse.json({ error: "Gemini API key not configured" }, { status: 500 });
@@ -82,10 +84,11 @@ Write notes now in JSON format:`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error:", response.status, errorText);
-      return NextResponse.json({ notes: {} });
+      return NextResponse.json({ notes: {}, error: errorText });
     }
 
     const data = await response.json();
+    console.log("Gemini response:", JSON.stringify(data).substring(0, 500));
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     
     if (!content || content === "{}") {
