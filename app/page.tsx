@@ -192,7 +192,7 @@ export default function Home() {
     return logText;
   };
 
-  const processWeeklyActivities = (activities: any[]): any => {
+  const processWeeklyActivities = (activities: any[], recoveryActivities?: Record<number, string[]>, lastDayOffRunning?: string, lastCompleteDayOff?: string): any => {
     const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const weekData: any = {
       days: [],
@@ -226,7 +226,7 @@ export default function Home() {
         totalMileage,
         crossTrainingMinutes,
         hasActivities: dayActivities.length > 0,
-        recoveryActivities: recoveryActivities[dayIndex] || []
+        recoveryActivities: (recoveryActivities || {})[dayIndex] || []
       });
     }
 
@@ -278,7 +278,12 @@ export default function Home() {
       const accessToken = await exchangeCodeForToken(code);
       const activities = await fetchActivities(accessToken, getWeekStart(), getWeekEnd());
       
-      const weekData = processWeeklyActivities(activities);
+      const savedLastDayOff = sessionStorage.getItem('lastDayOffRunning') || '';
+      const savedLastComplete = sessionStorage.getItem('lastCompleteDayOff') || '';
+      const savedRecovery = sessionStorage.getItem('recoveryActivities');
+      const recovered = savedRecovery ? JSON.parse(savedRecovery) : {};
+      
+      const weekData = processWeeklyActivities(activities, recovered, savedLastDayOff, savedLastComplete);
       
       let notes: Record<string, string> = {};
       if (generateNotes) {
