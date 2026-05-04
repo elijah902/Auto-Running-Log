@@ -82,15 +82,21 @@ Write notes now in JSON format:`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error:", response.status, errorText);
-      return NextResponse.json({ notes: {} });
+      return NextResponse.json({ 
+        notes: {}, 
+        error: `Gemini API ${response.status}: ${errorText.substring(0, 200)}` 
+      }, { status: response.status });
     }
 
     const data = await response.json();
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     
     if (!content || content === "{}") {
-      console.error("Empty response from Gemini API");
-      return NextResponse.json({ notes: {} });
+      console.error("Empty response from Gemini API:", JSON.stringify(data).substring(0, 500));
+      return NextResponse.json({ 
+        notes: {}, 
+        error: "Empty response from Gemini API" 
+      }, { status: 502 });
     }
 
     let notes: Record<string, string> = {};
@@ -99,13 +105,20 @@ Write notes now in JSON format:`;
       if (jsonMatch) {
         notes = JSON.parse(jsonMatch[0]);
       }
-    } catch {
-      console.error("Failed to parse AI response");
+    } catch (e) {
+      console.error("Failed to parse AI response:", e);
+      return NextResponse.json({ 
+        notes: {}, 
+        error: "Failed to parse AI response" 
+      }, { status: 502 });
     }
 
     return NextResponse.json({ notes });
   } catch (error) {
     console.error("Notes generation error:", error);
-    return NextResponse.json({ notes: {} });
+    return NextResponse.json({ 
+      notes: {}, 
+      error: error instanceof Error ? error.message : "Unknown error" 
+    }, { status: 500 });
   }
 }
